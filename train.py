@@ -10,7 +10,7 @@ from lib.training import cycle, save_state
 from lib.logging import get_summary_writer
 from lib.datasets import ECGDataset, collate_longest_in_batch
 
-CONFIG = "./experiments/010.yaml"
+CONFIG = "./experiments/001.yaml"
 
 if __name__ == "__main__":
     cfg, model_dir, vis_dir, log_dir = load_config(CONFIG)

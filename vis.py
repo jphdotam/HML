@@ -13,7 +13,7 @@ from lib.models import load_model
 from tqdm import tqdm
 #
 
-EXPERIMENT_ID = '010'
+EXPERIMENT_ID = '001'
 CONFIG = f"./experiments/{EXPERIMENT_ID}.yaml"
 MODEL_DIR = f"./output/models/{EXPERIMENT_ID}"
 TEST_FOLD = 4

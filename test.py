@@ -11,8 +11,8 @@ from lib.datasets import ECGDataset, collate_longest_in_batch
 from lib.testing import test
 from lib.plots import plot_confusion_matrix
 
-CONFIG = "./experiments/010.yaml"
-MODEL_DIR = "./output/models/010"
+CONFIG = "./experiments/001.yaml"
+MODEL_DIR = "./output/models/001"
 TEST_FOLD = 4
 
 if __name__ == "__main__":
