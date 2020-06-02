@@ -7,8 +7,17 @@ This is the repository for the His pacing machine learning project.
 `test.py` - Evaluate the ensembled 3 CNNs on the testing dataset
 
 `vis.py` - Create the saliency maps
+
+The pre-trained networks are available in `output/models/`
+
+Saliency maps for the entire testing set are available in `output/vis/`
  
-![Confusion matrix](cm.png)
+<p align="center">
+<img src="cm.png"/>
+</p>
+<p align="center">
+<img src="output/vis/001/H009_3_1_SH_NC_3_CORRECT.png"/>
+</p>
 
 
 
