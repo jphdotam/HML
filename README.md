@@ -2,6 +2,8 @@
 
 This is the repository for the His pacing machine learning project.
 
+The open access manuscript is available [here](https://www.cvdigitalhealthjournal.com/article/S2666-6936(20)30005-0/fulltext#.X0ZswM0RkhQ.twitter)
+
 `train.py` - Train the 3 CNNs via 3-fold cross-validation across the training set
 
 `test.py` - Evaluate the ensembled 3 CNNs on the testing dataset
