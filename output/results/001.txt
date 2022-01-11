@@ -1,5 +1,5 @@
-Cohen's Kappa: 0.5889261744966443
-Accuracy:      0.75
+Cohen's Kappa:        0.5889261744966443
+Accuracy:             0.75
 Confusion matrix:
 [[10  5  0]
  [16 53  6]

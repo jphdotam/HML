@@ -11,8 +11,8 @@ from lib.datasets import ECGDataset, collate_longest_in_batch
 from lib.testing import test
 from lib.plots import plot_confusion_matrix
 
-CONFIG = "./experiments/001.yaml"
-MODEL_DIR = "./output/models/001"
+CONFIG = "./experiments/gru.yaml"
+MODEL_DIR = "./output/models/gru"
 TEST_FOLD = 4
 
 if __name__ == "__main__":
@@ -31,8 +31,8 @@ if __name__ == "__main__":
 
     # Write results
     with open(f"./output/results/{os.path.basename(MODEL_DIR)}.txt", 'w') as f:
-        f.write(f"Cohen's Kappa: {kappa}\n")
-        f.write(f"Accuracy:      {accuracy}\n")
+        f.write(f"Cohen's Kappa:        {kappa}\n")
+        f.write(f"Accuracy:             {accuracy}\n")
         f.write(f"Confusion matrix:\n{cm}")
 
     # Sort by filename

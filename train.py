@@ -10,12 +10,12 @@ from lib.training import cycle, save_state
 from lib.logging import get_summary_writer
 from lib.datasets import ECGDataset, collate_longest_in_batch
 
-CONFIG = "./experiments/001.yaml"
+CONFIG = "./experiments/gru.yaml"
 
 if __name__ == "__main__":
     cfg, model_dir, vis_dir, log_dir = load_config(CONFIG)
 
-    for fold in range(1,cfg['data']['n_folds']):
+    for fold in range(1, cfg['data']['n_folds']):
 
         # Data
         ds_train = ECGDataset(cfg, 'train', fold)
@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
         # Train
         writer = get_summary_writer(cfg, log_dir)
-        best_loss, best_path, last_save_path = 1e10, None, None
+        best_loss, best_kappa, best_path, last_save_path = 1e10, 0, None, None
         n_epochs = cfg['training']['n_epochs']
 
         for epoch in range(starting_epoch, n_epochs + 1):
@@ -47,4 +47,12 @@ if __name__ == "__main__":
                      'optimizer': optimizer.state_dict(),
                      'scheduler': scheduler}
             save_path = os.path.join(model_dir, f"f{fold}_{epoch}_{test_kappa:.05f}.pt")
-            best_loss, last_save_path = save_state(state, save_path, test_loss, best_loss, cfg, last_save_path, lowest_best=True)
+
+            # Save model according to tracked variable
+            tracked_metric = cfg['output'].get('track', 'loss')
+            if tracked_metric == 'loss':
+                best_loss, last_save_path = save_state(state, save_path, test_loss, best_loss, cfg, last_save_path, lowest_best=True)
+            elif tracked_metric == 'kappa':
+                best_kappa, last_save_path = save_state(state, save_path, test_kappa, best_kappa, cfg, last_save_path, lowest_best=False)
+            else:
+                raise ValueError()

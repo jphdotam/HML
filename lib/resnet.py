@@ -100,7 +100,7 @@ class ResNet(nn.Module):
 
     def __init__(self, block, layers, n_inputs, num_classes=1000, zero_init_residual=False,
                  groups=1, width_per_group=64, replace_stride_with_dilation=None,
-                 norm_layer=None):
+                 norm_layer=None, dropout=False):
         super(ResNet, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm1d
@@ -118,6 +118,8 @@ class ResNet(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
+        self.dropout = dropout
+
         self.conv1 = nn.Conv1d(n_inputs, self.inplanes, kernel_size=7, stride=2, padding=3,
                                bias=False)
         self.bn1 = norm_layer(self.inplanes)
@@ -171,6 +173,8 @@ class ResNet(nn.Module):
             layers.append(block(self.inplanes, planes, groups=self.groups,
                                 base_width=self.base_width, dilation=self.dilation,
                                 norm_layer=norm_layer))
+            if self.dropout:
+                layers.append(nn.Dropout(p=self.dropout))
 
         return nn.Sequential(*layers)
 
@@ -196,17 +200,48 @@ def _resnet(arch, block, layers, progress, n_inputs, n_classes, **kwargs):
     model = ResNet(block, layers, n_inputs, n_classes, **kwargs)
     return model
 
-def resnet50_1d_old(n_inputs, n_classes, progress=True, **kwargs):
-    return _resnet('resnet50', Bottleneck, [1, 1, 2, 1], progress, n_inputs, n_classes, **kwargs)
 
 def resnet18_1d(n_inputs, n_classes, progress=True, **kwargs):
     return _resnet('resnet18', BasicBlock, [2, 2, 2, 2], progress, n_inputs, n_classes, **kwargs)
 
+
 def resnet34_1d(n_inputs, n_classes, progress=True, **kwargs):
     return _resnet('resnet34', BasicBlock, [3, 4, 6, 3], progress, n_inputs, n_classes, **kwargs)
 
+
 def resnet50_1d(n_inputs, n_classes, progress=True, **kwargs):
     return _resnet('resnet50', Bottleneck, [3, 4, 6, 3], progress, n_inputs, n_classes, **kwargs)
+
+
+def resnet101_1d(n_inputs, n_classes, progress=True, **kwargs):
+    return _resnet('resnet101', Bottleneck, [3, 4, 23, 3], progress, n_inputs, n_classes, **kwargs)
+
+
+def resnet152_1d(n_inputs, n_classes, progress=True, **kwargs):
+    return _resnet('resnet152', Bottleneck, [3, 8, 36, 3], progress, n_inputs, n_classes, **kwargs)
+
+
+def resnext50_32x4d_1d(n_inputs, n_classes, progress=True, **kwargs):
+    kwargs['groups'] = 32
+    kwargs['width_per_group'] = 4
+    return _resnet('resnext50_32x4d', Bottleneck, [3, 4, 6, 3], progress, n_inputs, n_classes, **kwargs)
+
+
+def resnext101_32x8d_1d(n_inputs, n_classes, progress=True, **kwargs):
+    kwargs['groups'] = 32
+    kwargs['width_per_group'] = 8
+    return _resnet('resnext101_32x8d', Bottleneck, [3, 4, 23, 3], progress, n_inputs, n_classes, **kwargs)
+
+
+def wide_resnet50_1d(n_inputs, n_classes, progress=True, **kwargs):
+    kwargs['width_per_group'] = 64 * 2
+    return _resnet('wide_resnet50', Bottleneck, [3, 4, 6, 3], progress, n_inputs, n_classes, **kwargs)
+
+
+def wide_resnet101_1d(n_inputs, n_classes, progress=True, **kwargs):
+    kwargs['width_per_group'] = 64 * 2
+    return _resnet('wide_resnet50', Bottleneck, [3, 4, 23, 3], progress, n_inputs, n_classes, **kwargs)
+
 
 if __name__ == "__main__":
     model = resnet50_1d(12, 3)

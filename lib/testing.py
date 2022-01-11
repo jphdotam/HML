@@ -8,7 +8,17 @@ import torch
 from lib.models import load_model
 
 
-def test(statepaths, dataloader, cfg):
+def get_n_params(model):
+    pp = 0
+    for p in list(model.parameters()):
+        nn = 1
+        for s in list(p.size()):
+            nn = nn*s
+        pp += nn
+    return pp
+
+
+def test(statepaths, dataloader, cfg, return_n_params=False):
     n_classes_test = len(set(cfg['data']['beat_types']['test'].values()))
 
     device = cfg['training']['device']
@@ -58,4 +68,9 @@ def test(statepaths, dataloader, cfg):
     print(f"Accuracy:      {accuracy}")
     print(f"Confusion matrix:\n{cm}")
 
-    return targets, predicted_classes, filenames, kappa, accuracy, cm
+    if return_n_params:
+        n_params = get_n_params(model)
+        return targets, predicted_classes, filenames, kappa, accuracy, cm, n_params
+
+    else:
+        return targets, predicted_classes, filenames, kappa, accuracy, cm

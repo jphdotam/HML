@@ -127,3 +127,4 @@ dmypy.json
 data/
 .idea/
 _old/
+output/

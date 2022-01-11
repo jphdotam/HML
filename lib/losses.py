@@ -5,16 +5,18 @@ import torch.nn.functional as F
 
 class LabelSmoothingCrossEntropy(nn.Module):
     """Thanks to"""
-    def __init__(self, epsilon: float = 0.1, reduction='mean'):
+    def __init__(self, epsilon: float = 0.1, reduction='mean', class_weights=None):
+        print(f"LS crossentropy epsilon {epsilon}; class weights {class_weights}")
         super().__init__()
         self.epsilon = epsilon
         self.reduction = reduction
+        self.class_weights = class_weights
 
     def forward(self, preds, target):
         n = preds.size()[-1]
         log_preds = F.log_softmax(preds, dim=-1)
         loss = self.reduce_loss(-log_preds.sum(dim=-1), self.reduction)
-        nll = F.nll_loss(log_preds, target, reduction=self.reduction)
+        nll = F.nll_loss(log_preds, target, reduction=self.reduction, weight=self.class_weights)
         return self.linear_combination(loss / n, nll, self.epsilon)
 
     @staticmethod
@@ -28,16 +30,17 @@ class LabelSmoothingCrossEntropy(nn.Module):
 
 class OHEMCrossEntropy(nn.Module):
     """Combination of above & written by JH"""
-    def __init__(self, ohem_rate=0.9, labelsmoothing_epsilon=0.1, reduction='mean'):
-        print(f"Using OHEM crossentropy with OHEM rate {ohem_rate} and LS epsilon of {labelsmoothing_epsilon}")
+    def __init__(self, ohem_rate=0.9, labelsmoothing_epsilon=0.1, reduction='mean', class_weights=None):
+        print(f"OHEM crossentropy rate {ohem_rate}; LS epsilon {labelsmoothing_epsilon}; class weights {class_weights}")
         super().__init__()
         self.ohem_rate = ohem_rate
         self.labelsmoothing_epsilon = labelsmoothing_epsilon
         self.reduction = reduction
+        self.class_weights = class_weights
 
-    def forward(self, preds, targets):
+    def forward(self, preds, targets, class_weights=None):
         n = preds.size()[-1]
-        elementwise_losses = F.cross_entropy(preds, targets, reduction='none', ignore_index=-1)
+        elementwise_losses = F.cross_entropy(preds, targets, reduction='none', ignore_index=-1, weight=self.class_weights)
         sorted_losses, idx = torch.sort(elementwise_losses, descending=True)
         keep_num = min(sorted_losses.size()[0], int(len(preds) * self.ohem_rate))
         keep_ids = idx[:keep_num]
@@ -48,7 +51,7 @@ class OHEMCrossEntropy(nn.Module):
         if self.labelsmoothing_epsilon:
             log_preds = F.log_softmax(preds, dim=-1)
             loss = self.reduce_loss(-log_preds.sum(dim=-1), self.reduction)
-            nll = F.nll_loss(log_preds, targets, reduction=self.reduction)
+            nll = F.nll_loss(log_preds, targets, reduction=self.reduction, weight=class_weights)
             return self.linear_combination(loss / n, nll, self.labelsmoothing_epsilon)
 
         else:
@@ -72,13 +75,13 @@ def load_criterion(cfg):
             class_weights = torch.tensor(class_weights).float().to(cfg['training']['device'])
 
         if name == 'crossentropy':
-            assert not class_weights or not label_smoothing, "Can't specify label smoothing and class weights"
             if label_smoothing:
-                return LabelSmoothingCrossEntropy(epsilon=label_smoothing)
+                return LabelSmoothingCrossEntropy(epsilon=label_smoothing, class_weights=class_weights)
             else:
+                print(f"CrossentropyLoss with weights {class_weights} and no LS")
                 return nn.CrossEntropyLoss(weight=class_weights)
         elif name == 'ohemcrossentropy':
-            return OHEMCrossEntropy(ohem_rate=ohem_rate, labelsmoothing_epsilon=label_smoothing)
+            return OHEMCrossEntropy(ohem_rate=ohem_rate, labelsmoothing_epsilon=label_smoothing, class_weights=class_weights)
 
         elif name == 'mse':
             return nn.MSELoss()
@@ -89,16 +92,11 @@ def load_criterion(cfg):
     crittype_test = cfg['training']['test_criterion']
     class_weights_train = cfg['training'].get('class_weights_train', None)
     class_weights_test = cfg['training'].get('class_weights_test', None)
-    label_smoothing = cfg['training'].get('label_smoothing', None)
+    label_smoothing_train = cfg['training'].get('label_smoothing_train', None)
+    label_smoothing_test = cfg['training'].get('label_smoothing_test', None)
     ohem_rate = cfg['training'].get('ohem_rate', None)
 
-    if class_weights_train:
-        print(f"Using class weights {class_weights_train} for training")
-
-    if class_weights_test:
-        print(f"Using class weights {class_weights_test} for testing")
-
-    train_criterion = get_criterion(crittype_train, class_weights=class_weights_train, label_smoothing=label_smoothing, ohem_rate=ohem_rate)
-    test_criterion = get_criterion(crittype_test, class_weights=class_weights_test, label_smoothing=label_smoothing, ohem_rate=ohem_rate)
+    train_criterion = get_criterion(crittype_train, class_weights=class_weights_train, label_smoothing=label_smoothing_train, ohem_rate=ohem_rate)
+    test_criterion = get_criterion(crittype_test, class_weights=class_weights_test, label_smoothing=label_smoothing_test, ohem_rate=ohem_rate)
 
     return train_criterion, test_criterion

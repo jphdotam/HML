@@ -1,0 +1,56 @@
+description: resnet34_1d_1d_ohem_adamW_wd
+
+resume:
+  path: false
+
+data:
+  csv_path: ../final_dataset_PoC.xlsx
+  paceddata_path: ./data/EndSpikeEndQRS
+  intrinsicdata_path: false
+  assignment_method: hash  # default seed, alternate hash
+  beat_types:
+    train: {MC: MC, NS: NS, SH: SH}
+    test: {MC: MC, NS: NS, SH: SH}
+  max_samples_per_beattype: 5
+  stack_intrinsic: false
+  n_folds: 4
+  excluded_folds: [4,]
+  median: [2038,589,-1187,-1277,1596,-304,-1272,-900,-370,705,1557,1373]
+  iqr: [4542,3953,3492,3829,3463,2949,5980,7183,7120,6778,6389,5346]
+
+training:
+  # network
+  arch: rnn_gru
+  dropout: false  # Probably _to be dropped out_ - False for no dropout,
+  data_parallel: false
+
+  # hyperparams
+  batch_size: 32
+  n_epochs: 30
+  optimizer: adamw
+  lr: 0.001
+  weight_decay: 0.01
+  scheduler: false
+
+  # loss
+  train_criterion: ohemcrossentropy
+  test_criterion: crossentropy
+  class_weights_train: [5,1,1]
+  class_weights_test: [5,1,1]
+  label_smoothing_train: 0.1
+  label_smoothing_test: false
+  ohem_rate: 0.9
+
+  # other settings
+  n_workers: 2
+  device: cuda
+
+transforms:
+  train: false
+  test: false
+
+output:
+  use_tensorboard: true
+  log_freq: 10  # in iterations
+  track: loss  # kappa or loss
+  save: best

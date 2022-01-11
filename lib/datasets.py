@@ -1,5 +1,6 @@
 import os
 import random
+import hashlib
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -123,10 +124,19 @@ class ECGDataset(Dataset):
 
     def get_cases(self):
         def get_train_test_exclude_for_case(case):
-            patient_root = case[:4]  # H036b -> H036
-            random.seed(patient_root)
             assert 1 <= self.fold <= self.n_folds, f"Fold should be between 1 and {self.n_folds}, not {self.fold}"
-            test_fold = random.randint(1, self.n_folds)
+
+            patient_root = case[:4]  # H036b -> H036
+            assignment_method = self.cfg['data'].get('assignment_method', 'seed')
+            if assignment_method == 'seed':
+                random.seed(patient_root)
+                test_fold = random.randint(1, self.n_folds)
+            elif assignment_method == 'hash':
+                randnum = int(hashlib.md5(str.encode(patient_root)).hexdigest(), 16) / 16**32
+                test_fold = int(randnum * self.n_folds) + 1  # 4 folds -> 1,2,3 or 4
+            else:
+                raise ValueError()
+
             if test_fold == self.fold:
                 return 'test'
             elif test_fold in self.excluded_folds:
